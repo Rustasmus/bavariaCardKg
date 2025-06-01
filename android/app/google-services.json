@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "744863490088",
+    "project_id": "bavaria-kg",
+    "storage_bucket": "bavaria-kg.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:744863490088:android:42f5df040b18ff80fb151d",
+        "android_client_info": {
+          "package_name": "kg.bavaria.bmw"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAE0Tjj9x6iC1flYRgXvq7VJB7nYFKq39Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

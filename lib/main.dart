@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dialogs/login_dialog.dart';
 
-void main() => runApp(BavariaApp());
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  ); // инициализация Firebase
+  runApp(const BavariaApp());
+}
 
 class BavariaApp extends StatelessWidget {
   const BavariaApp({super.key});
@@ -50,6 +60,16 @@ class HomePage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10, right: 16),
+                child: ElevatedButton(
+                  onPressed: () => showLoginDialog(context),
+                  child: Text('Вход'),
+                ),
+              ),
+            ),
             const SizedBox(height: 40),
             PulsatingLogo(),
             const SizedBox(height: 2),
