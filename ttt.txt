@@ -1,0 +1,4 @@
+storePassword=704592
+keyPassword=704592
+keyAlias=bavariaKey
+storeFile=C:/Users/Rustas/StudioProjects/Bavaria/bavariaKey.jks

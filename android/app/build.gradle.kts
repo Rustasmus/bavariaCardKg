@@ -1,3 +1,11 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties().apply {
+    load(FileInputStream(keystorePropertiesFile))
+}
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -7,8 +15,8 @@ plugins {
 }
 
 android {
-    namespace = "com.bavaria.bavaria"
-    compileSdk = 34 // flutter.compileSdkVersion
+    namespace = "kg.bavaria.bmw"
+    compileSdk = flutter.compileSdkVersion // 34
     ndkVersion = "27.0.12077973"
 
 
@@ -23,25 +31,36 @@ android {
 
     defaultConfig {
         applicationId = "kg.bavaria.bmw"
-        minSdk = 21 // flutter.minSdkVersion
-        targetSdk = 34 // flutter.targetSdkVersion
-        versionCode = 1 // flutter.versionCode
-        versionName = "1.0" // flutter.versionName
+        minSdk = flutter.minSdkVersion //21
+        targetSdk = flutter.targetSdkVersion // 34
+        versionCode = flutter.versionCode // 1
+        versionName = flutter.versionName // "1.0"
     }
 
     buildFeatures {
         buildConfig = true // ✅ Включаем генерацию BuildConfig
     }
+
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+        }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
-            buildConfigField("boolean", "SHRINK_RESOURCES", "true")
+            isShrinkResources = true // buildConfigField("boolean", "SHRINK_RESOURCES", "true")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         // release 
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-        //    signingConfig = signingConfigs.getByName("debug")
+            }
         }
+    
     }
 }
 
