@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.bavaria.bavaria"
-    compileSdk = 35 // flutter.compileSdkVersion
+    compileSdk = 34 // flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
 

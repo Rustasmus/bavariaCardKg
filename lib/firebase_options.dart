@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '744863490088',
     projectId: 'bavaria-kg',
     storageBucket: 'bavaria-kg.firebasestorage.app',
-    iosBundleId: 'com.bavaria.bavaria',
+    iosBundleId: 'kg.bavaria.bmw',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'bavaria-kg.firebasestorage.app',
     measurementId: 'G-KSDXPMYNRV',
   );
+
 }

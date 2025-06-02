@@ -1,4 +1,4 @@
-package com.bavaria.bavaria
+package kg.bavaria.bmw
 
 import io.flutter.embedding.android.FlutterActivity
 
