@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import 'registration_dialog.dart';
+import '../screens/workmans_home_page.dart';
+import '../screens/user_home_page.dart';
+import '../utils/workman_utils.dart'; // импортируем функцию проверки
 
 void showLoginDialog(BuildContext context) {
   showDialog(
@@ -44,7 +47,21 @@ class _LoginDialogState extends State<LoginDialog> {
     if (!mounted) return;
 
     if (result == null) {
-      Navigator.pop(context); // закрываем диалог при успешном входе
+      final user = authService.currentUser;
+
+      if (user != null && user.email != null) {
+        final isWorkman = await isWorkmanByEmail(user.email!);
+        if (!mounted) return;
+        if (isWorkman) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const WorkmansHomePage()),
+          );
+        } else {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const UserHomePage()),
+          );
+        }
+      }
     } else {
       setState(() {
         error = result;

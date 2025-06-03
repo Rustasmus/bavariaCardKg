@@ -19,6 +19,7 @@ dependencies:
   cloud_firestore: ^4.14.5
   provider: ^6.1.1
   qr_flutter: ^4.0.0
+  mobile_scanner: ^7.0.0
 
 dev_dependencies:
   flutter_test:

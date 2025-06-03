@@ -9,7 +9,7 @@ class AuthService extends ChangeNotifier {
   User? _currentUser;
 
   AuthService() {
-    // Подписка на изменения аутентификации
+    // Слушаем изменения авторизации
     _auth.authStateChanges().listen((User? user) {
       _currentUser = user;
       notifyListeners();
@@ -19,12 +19,13 @@ class AuthService extends ChangeNotifier {
   /// Поток изменений пользователя (для StreamBuilder и Consumer)
   Stream<User?> get userChanges => _auth.authStateChanges();
 
-  /// Быстрая проверка: пользователь вошёл в систему
+  /// Проверка — вошёл ли пользователь
   bool isLoggedIn() => _auth.currentUser != null;
 
   /// Текущий пользователь
   User? get currentUser => _currentUser;
 
+  /// Получить профиль пользователя из Firestore по UID
   Future<Map<String, dynamic>?> fetchUserProfile(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
@@ -53,7 +54,7 @@ class AuthService extends ChangeNotifier {
 
       await userCredential.user!.sendEmailVerification();
 
-      // Сохраняем все обязательные поля!
+      // Сохраняем данные пользователя в Firestore
       await _firestore.collection('users').doc(userCredential.user!.uid).set({
         'email': email,
         'phone': phone,
@@ -70,37 +71,6 @@ class AuthService extends ChangeNotifier {
       return e.message;
     } catch (e) {
       return 'Ошибка: $e';
-    }
-  }
-
-  /// Функция добавления записи для пользователя (таблица)
-  Future<String?> addUserRecord({
-    required String userId,
-    required String workmanId,
-    required DateTime date,
-    required String order,
-    double? amount,
-    double? bonus,
-  }) async {
-    try {
-      final data = <String, dynamic>{
-      'date': date,
-      'order': order,
-      'workman_id': workmanId,
-    };
-
-    if (amount != null) data['amount'] = amount;
-    if (bonus != null) data['bonus'] = bonus;
-
-    await _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('records')
-        .add(data);
-
-    return null;
-  } catch (e) {
-      return 'Ошибка при добавлении записи: $e';
     }
   }
 
@@ -149,4 +119,35 @@ class AuthService extends ChangeNotifier {
 
   /// Получение текущего пользователя вручную
   User? getCurrentUser() => _auth.currentUser;
+
+  /// Добавление записи для пользователя (например, заказ/история)
+  Future<String?> addUserRecord({
+    required String userId,
+    required String workmanId,
+    required DateTime date,
+    required String order,
+    double? amount,
+    double? bonus,
+  }) async {
+    try {
+      final data = <String, dynamic>{
+        'date': date,
+        'order': order,
+        'workman_id': workmanId,
+      };
+
+      if (amount != null) data['amount'] = amount;
+      if (bonus != null) data['bonus'] = bonus;
+
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('records')
+          .add(data);
+
+      return null;
+    } catch (e) {
+      return 'Ошибка при добавлении записи: $e';
+    }
+  }
 }

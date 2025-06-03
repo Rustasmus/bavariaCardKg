@@ -65,6 +65,7 @@ class _RegistrationDialogState extends State<RegistrationDialog> {
     if (error == null) {
       // ВАЖНО: сразу после регистрации разлогиниваем пользователя!
       await authService.logout();
+      if (!mounted) return;
       // Регистрация успешна — можно показать диалог с инструкцией по подтверждению почты
       showDialog(
         context: context,
