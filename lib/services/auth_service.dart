@@ -1,42 +1,71 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
-class AuthService {
+class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Регистрация пользователя
+  User? _currentUser;
+
+  AuthService() {
+    // Подписка на изменения аутентификации
+    _auth.authStateChanges().listen((User? user) {
+      _currentUser = user;
+      notifyListeners();
+    });
+  }
+
+  /// Поток изменений пользователя (для StreamBuilder и Consumer)
+  Stream<User?> get userChanges => _auth.authStateChanges();
+
+  /// Быстрая проверка: пользователь вошёл в систему
+  bool isLoggedIn() => _auth.currentUser != null;
+
+  /// Текущий пользователь
+  User? get currentUser => _currentUser;
+
+  Future<Map<String, dynamic>?> fetchUserProfile(String uid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      return doc.data();
+    } catch (e) {
+      debugPrint('Ошибка получения профиля: $e');
+      return null;
+    }
+  }
+
+  /// Регистрация нового пользователя
   Future<String?> registerUser({
     required String email,
     required String password,
     required String phone,
     required String birthDate,
-    String? firstName,
-    String? middleName,
-    String? bmwModel,
+    required String firstName,
+    required String middleName,
+    required String bmwModel,
   }) async {
     try {
-      // Создание пользователя
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Отправка письма с подтверждением
       await userCredential.user!.sendEmailVerification();
 
-      // Сохранение дополнительных данных в Firestore
+      // Сохраняем все обязательные поля!
       await _firestore.collection('users').doc(userCredential.user!.uid).set({
         'email': email,
         'phone': phone,
         'birthDate': birthDate,
-        'firstName': firstName ?? '',
-        'middleName': middleName ?? '',
-        'bmwModel': bmwModel ?? '',
+        'firstName': firstName,
+        'middleName': middleName,
+        'bmwModel': bmwModel,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      return null; // успешно
+      notifyListeners();
+      return null;
     } on FirebaseAuthException catch (e) {
       return e.message;
     } catch (e) {
@@ -44,23 +73,53 @@ class AuthService {
     }
   }
 
-  // Вход в систему
+  /// Функция добавления записи для пользователя (таблица)
+  Future<String?> addUserRecord({
+    required String userId,
+    required String workmanId,
+    required DateTime date,
+    required String order,
+    double? amount,
+    double? bonus,
+  }) async {
+    try {
+      final data = <String, dynamic>{
+      'date': date,
+      'order': order,
+      'workman_id': workmanId,
+    };
+
+    if (amount != null) data['amount'] = amount;
+    if (bonus != null) data['bonus'] = bonus;
+
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('records')
+        .add(data);
+
+    return null;
+  } catch (e) {
+      return 'Ошибка при добавлении записи: $e';
+    }
+  }
+
+  /// Авторизация пользователя
   Future<String?> loginUser(String email, String password) async {
     try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      User? user = userCredential.user;
-
-      // Проверка подтверждения email
+      final user = userCredential.user;
       if (user != null && !user.emailVerified) {
         await _auth.signOut();
         return 'Email не подтверждён. Проверьте почту.';
       }
 
-      return null; // успешно
+      notifyListeners();
+      return null;
     } on FirebaseAuthException catch (e) {
       return e.message;
     } catch (e) {
@@ -68,10 +127,10 @@ class AuthService {
     }
   }
 
-  // Повторная отправка письма с подтверждением
+  /// Повторная отправка письма для подтверждения email
   Future<String?> resendEmailVerification() async {
     try {
-      User? user = _auth.currentUser;
+      final user = _auth.currentUser;
       if (user != null && !user.emailVerified) {
         await user.sendEmailVerification();
         return 'Письмо с подтверждением отправлено.';
@@ -82,13 +141,12 @@ class AuthService {
     }
   }
 
-  // Выход
+  /// Выход из аккаунта
   Future<void> logout() async {
     await _auth.signOut();
+    notifyListeners();
   }
 
-  // Проверка, вошел ли пользователь
-  User? getCurrentUser() {
-    return _auth.currentUser;
-  }
+  /// Получение текущего пользователя вручную
+  User? getCurrentUser() => _auth.currentUser;
 }
