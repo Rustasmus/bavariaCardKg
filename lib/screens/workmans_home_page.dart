@@ -5,7 +5,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'guest_home_page.dart';
 import 'qr_scanner_page.dart';
 import 'workman_user_details_page.dart';
-import '../utils/workman_utils.dart'; // функция проверки сотрудника
+import '../utils/workman_utils.dart'; // функция проверки сотрудника + getWorkmanKeyByEmail
+import 'admin_home_page.dart';
+import '../dialogs/admin_login_dialog.dart';
 
 class WorkmansHomePage extends StatefulWidget {
   const WorkmansHomePage({super.key});
@@ -18,11 +20,13 @@ class _WorkmansHomePageState extends State<WorkmansHomePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool isLoading = false;
   bool? isAllowed;
+  String? workmanID; // Для заголовка
 
   @override
   void initState() {
     super.initState();
     _checkAccess();
+    _loadWorkmanID();
   }
 
   void _checkAccess() async {
@@ -48,6 +52,16 @@ class _WorkmansHomePageState extends State<WorkmansHomePage> {
           MaterialPageRoute(builder: (_) => GuestHomePage()),
           (route) => false,
         );
+      });
+    }
+  }
+
+  Future<void> _loadWorkmanID() async {
+    final user = _auth.currentUser;
+    if (user != null && user.email != null) {
+      final key = await getWorkmanKeyByEmail(user.email!);
+      setState(() {
+        workmanID = key; // Может быть null
       });
     }
   }
@@ -78,7 +92,10 @@ class _WorkmansHomePageState extends State<WorkmansHomePage> {
 
   Future<void> _handleScannedUID(String userUid) async {
     try {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userUid).get();
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userUid)
+          .get();
 
       if (userDoc.exists) {
         if (!mounted) return;
@@ -86,7 +103,7 @@ class _WorkmansHomePageState extends State<WorkmansHomePage> {
           MaterialPageRoute(
             builder: (_) => WorkmanUserDetailsPage(
               userData: userDoc.data()!,
-              userUid: userDoc.id, // <--- обязательно!
+              userUid: userDoc.id,
               onSignOut: _signOut,
             ),
           ),
@@ -127,9 +144,14 @@ class _WorkmansHomePageState extends State<WorkmansHomePage> {
       return const Scaffold(body: SizedBox.shrink());
     }
 
+    // Используем workmanID или дефолтный текст, если еще не подгрузилось
+    final appBarTitle = workmanID?.isNotEmpty == true
+        ? workmanID!
+        : 'Рабочее пространство';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Рабочее пространство'),
+        title: Text(appBarTitle),
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
@@ -157,6 +179,22 @@ class _WorkmansHomePageState extends State<WorkmansHomePage> {
                   size: 80,
                 ),
               ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.admin_panel_settings),
+        label: const Text("Права администратора"),
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (ctx) => AdminLoginDialog(
+              onSuccess: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AdminHomePage()),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }

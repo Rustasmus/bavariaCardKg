@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../widgets/records_history_dialog.dart';
 import '../dialogs/add_record_dialog.dart';
+import '../utils/workman_utils.dart';
 
 // --- Главный экран деталей пользователя ---
 class WorkmanUserDetailsPage extends StatefulWidget {
@@ -67,7 +68,8 @@ class _WorkmanUserDetailsPageState extends State<WorkmanUserDetailsPage> {
           required double bonusOut,
         }) async {
           final authService = Provider.of<AuthService>(context, listen: false);
-          final workmanID = authService.currentUser?.email ?? 'unknown';
+          final workmanEmail = authService.currentUser?.email ?? 'unknown';
+          final workmanID = await getWorkmanKeyByEmail(workmanEmail);
           final error = await addClientRecord(
             userUid: widget.userUid,
             order: order,

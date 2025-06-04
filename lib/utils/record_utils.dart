@@ -1,5 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+Future<double> getDiscountFromWorkmansDoc() async {
+  final doc = await FirebaseFirestore.instance
+      .collection('workmans')
+      .doc('MOsntYo03RweD3Iqc8Uq')
+      .get();
+
+  final data = doc.data();
+  if (data == null) return 0.00; // дефолт
+
+  final discountStr = data['discount'];
+  if (discountStr != null) {
+    final discount = double.tryParse(discountStr.toString());
+    if (discount != null) return discount;
+  }
+  return 0.00;
+}
+
+
 /// Добавляет новую запись для пользователя и считает бонусы
 Future<String?> addClientRecord({
   required String userUid,
@@ -25,7 +43,8 @@ Future<String?> addClientRecord({
     }
 
     // Логика расчёта нового bonus_available
-    final newBonus = lastBonus - bonusOut + amount / 100;
+    final discount = await getDiscountFromWorkmansDoc();
+    final newBonus = lastBonus - bonusOut + amount * discount;
 
     await recordsRef.add({
       'date': Timestamp.now(),
