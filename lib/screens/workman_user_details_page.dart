@@ -1,26 +1,105 @@
 import 'package:flutter/material.dart';
-// import 'guest_home_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../utils/record_utils.dart';
 import 'workmans_home_page.dart';
+import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
+import '../widgets/records_history_dialog.dart';
+import '../dialogs/add_record_dialog.dart';
 
-class WorkmanUserDetailsPage extends StatelessWidget {
+// --- Главный экран деталей пользователя ---
+class WorkmanUserDetailsPage extends StatefulWidget {
   final Map<String, dynamic> userData;
+  final String userUid;
   final VoidCallback onSignOut;
 
   const WorkmanUserDetailsPage({
     required this.userData,
+    required this.userUid,
     required this.onSignOut,
     super.key,
   });
 
   @override
+  State<WorkmanUserDetailsPage> createState() => _WorkmanUserDetailsPageState();
+}
+
+class _WorkmanUserDetailsPageState extends State<WorkmanUserDetailsPage> {
+  double? lastBonus;
+  bool loadingBonus = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLastBonus();
+  }
+
+  Future<void> _loadLastBonus() async {
+    setState(() {
+      loadingBonus = true;
+      lastBonus = 0.0;
+    });
+    final recordsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userUid)
+        .collection('records');
+    final lastRecordSnapshot =
+        await recordsRef.orderBy('date', descending: true).limit(1).get();
+    setState(() {
+      loadingBonus = false;
+      if (lastRecordSnapshot.docs.isNotEmpty) {
+        final docData = lastRecordSnapshot.docs.first.data();
+        lastBonus = (docData['bonus_available'] as num?)?.toDouble() ?? 0.0;
+      } else {
+        lastBonus = 0.0;
+      }
+    });
+  }
+
+  void _showAddRecordDialog() async {
+    await showDialog(
+      context: context,
+      builder: (context) => AddRecordDialog(
+        lastBonusAvailable: lastBonus ?? 0.0,
+        onSave: ({
+          required int order,
+          required double amount,
+          required double bonusOut,
+        }) async {
+          final authService = Provider.of<AuthService>(context, listen: false);
+          final workmanID = authService.currentUser?.email ?? 'unknown';
+          final error = await addClientRecord(
+            userUid: widget.userUid,
+            order: order,
+            amount: amount,
+            bonusOut: bonusOut,
+            workmanID: workmanID,
+          );
+          if (error == null) {
+            await _loadLastBonus();
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Запись успешно добавлена!')),
+            );
+          } else {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(error)),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Для красоты и устойчивости к пустым значениям
     String fio = [
-      userData['firstname'] ?? '',
-      userData['middlename'] ?? ''
+      widget.userData['firstName'] ?? '',
+      widget.userData['middleName'] ?? ''
     ].where((e) => e.toString().isNotEmpty).join(' ');
-    String email = userData['email'] ?? '-';
-    String phone = userData['phone'] ?? '-';
+    String email = widget.userData['email'] ?? '-';
+    String phone = widget.userData['phone'] ?? '-';
 
     return Scaffold(
       appBar: AppBar(
@@ -40,7 +119,7 @@ class WorkmanUserDetailsPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: "Выйти",
-            onPressed: onSignOut,
+            onPressed: widget.onSignOut,
           ),
         ],
       ),
@@ -73,12 +152,20 @@ class WorkmanUserDetailsPage extends StatelessWidget {
             const Divider(),
             const SizedBox(height: 8),
             Row(
-              children: const [
-                Icon(Icons.star, size: 20, color: Colors.orange),
-                SizedBox(width: 8),
-                Text('Бонусы: ', style: TextStyle(fontSize: 18)),
-                // Здесь позже будет динамический вывод бонусов
-                Text('---', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              children: [
+                const Icon(Icons.star, size: 20, color: Colors.orange),
+                const SizedBox(width: 8),
+                const Text('Бонусы: ', style: TextStyle(fontSize: 18)),
+                loadingBonus
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(
+                        (lastBonus ?? 0.0).toStringAsFixed(2),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
               ],
             ),
             const SizedBox(height: 32),
@@ -86,9 +173,7 @@ class WorkmanUserDetailsPage extends StatelessWidget {
               child: Column(
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: реализовать добавление записи
-                    },
+                    onPressed: loadingBonus ? null : _showAddRecordDialog,
                     icon: const Icon(Icons.add),
                     label: const Text("Добавить запись"),
                     style: ElevatedButton.styleFrom(
@@ -98,7 +183,17 @@ class WorkmanUserDetailsPage extends StatelessWidget {
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () {
-                      // TODO: реализовать историю
+                      showDialog(
+                        context: context,
+                        builder: (context) => RecordsHistoryDialog(
+                          userUid: widget.userUid,
+                          title: "История начислений", // любой заголовок
+                          headerColor:
+                              Colors.deepPurple, // цвет строки-заголовка
+                          evenRowColor: Colors.grey[200], // цвет чётных строк
+                          oddRowColor: Colors.white, // цвет нечётных строк
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.history),
                     label: const Text("История"),
@@ -109,7 +204,6 @@ class WorkmanUserDetailsPage extends StatelessWidget {
                 ],
               ),
             ),
-            // Можно добавить доп. инфу ниже
           ],
         ),
       ),

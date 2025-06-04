@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'guest_home_page.dart';
 import 'qr_scanner_page.dart';
 import 'workman_user_details_page.dart';
-import '../utils/workman_utils.dart'; // не забудь добавить!
+import '../utils/workman_utils.dart'; // функция проверки сотрудника
 
 class WorkmansHomePage extends StatefulWidget {
   const WorkmansHomePage({super.key});
@@ -17,7 +17,7 @@ class WorkmansHomePage extends StatefulWidget {
 class _WorkmansHomePageState extends State<WorkmansHomePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool isLoading = false;
-  bool? isAllowed; // null - еще не проверили, false - нет доступа, true - есть доступ
+  bool? isAllowed;
 
   @override
   void initState() {
@@ -34,7 +34,6 @@ class _WorkmansHomePageState extends State<WorkmansHomePage> {
           isAllowed = allowed;
         });
         if (!allowed) {
-          // Если не сотрудник — выкидываем на гостевой экран
           WidgetsBinding.instance.addPostFrameCallback((_) {
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => GuestHomePage()),
@@ -44,7 +43,6 @@ class _WorkmansHomePageState extends State<WorkmansHomePage> {
         }
       }
     } else {
-      // Нет пользователя — тоже на guest
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => GuestHomePage()),
@@ -88,6 +86,7 @@ class _WorkmansHomePageState extends State<WorkmansHomePage> {
           MaterialPageRoute(
             builder: (_) => WorkmanUserDetailsPage(
               userData: userDoc.data()!,
+              userUid: userDoc.id, // <--- обязательно!
               onSignOut: _signOut,
             ),
           ),
@@ -119,18 +118,15 @@ class _WorkmansHomePageState extends State<WorkmansHomePage> {
   @override
   Widget build(BuildContext context) {
     if (isAllowed == null) {
-      // Пока не знаем, разрешено или нет — просто показываем лоадер
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (isAllowed == false) {
-      // Не разрешено — будет редирект, но можно просто пустой экран
       return const Scaffold(body: SizedBox.shrink());
     }
 
-    // Всё ок, сотрудник в системе!
     return Scaffold(
       appBar: AppBar(
         title: const Text('Рабочее пространство'),

@@ -3,7 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
+import '../widgets/records_history_dialog.dart';
+import 'guest_home_page.dart'; // подключи свой диалог истории
 
 class UserHomePage extends StatefulWidget {
   const UserHomePage({super.key});
@@ -15,6 +18,8 @@ class UserHomePage extends StatefulWidget {
 class _UserHomePageState extends State<UserHomePage> {
   Map<String, dynamic>? userProfile;
   bool isLoading = true;
+  double? bonusAvailable;
+  bool loadingBonus = false;
 
   @override
   void initState() {
@@ -27,9 +32,34 @@ class _UserHomePageState extends State<UserHomePage> {
     final user = authService.currentUser;
     if (user != null) {
       final data = await authService.fetchUserProfile(user.uid);
+
+      // Загружаем бонус
+      setState(() {
+        isLoading = true;
+      });
+      final recordsRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('records');
+      final lastRecordSnapshot =
+          await recordsRef.orderBy('date', descending: true).limit(1).get();
+
       setState(() {
         userProfile = data;
         isLoading = false;
+        loadingBonus = false;
+        if (lastRecordSnapshot.docs.isNotEmpty) {
+          final docData = lastRecordSnapshot.docs.first.data();
+          bonusAvailable =
+              (docData['bonus_available'] as num?)?.toDouble() ?? 0.0;
+        } else {
+          bonusAvailable = 0.0;
+        }
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+        bonusAvailable = 0.0;
       });
     }
   }
@@ -67,23 +97,83 @@ class _UserHomePageState extends State<UserHomePage> {
                 children: [
                   // Верхняя панель
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          // Вот тут используется Имя и Отчество!
                           '${userProfile?['firstName'] ?? ''} ${userProfile?['middleName'] ?? ''}',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         ElevatedButton(
-                          onPressed: () => authService.logout(),
+                          onPressed: () async {
+                            await authService.logout();
+                            if (!mounted) return;
+                            // После выхода отправляем на GuestHomePage и сбрасываем стек
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (_) => GuestHomePage()),
+                              (route) => false,
+                            );
+                          },
                           child: const Text('Выйти'),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  // Бонусы
+                  if (user != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.star,
+                              size: 22, color: Colors.orange),
+                          const SizedBox(width: 8),
+                          loadingBonus
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Text(
+                                  'Доступно бонусов: ${bonusAvailable?.toStringAsFixed(2) ?? "0.00"}',
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                        ],
+                      ),
+                    ),
+                  // Кнопка История
+                  if (user != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12.0, bottom: 12),
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.history),
+                        label: const Text("История"),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => RecordsHistoryDialog(
+                              userUid: user.uid,
+                              title: "История начислений",
+                              headerColor: Colors.deepPurple,
+                              evenRowColor: Colors.grey[200],
+                              oddRowColor: Colors.white,
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(170, 40),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
                   // QR-код
                   QrImageView(
                     data: user?.uid ?? "unknown",
@@ -122,8 +212,7 @@ class _UserHomePageState extends State<UserHomePage> {
                           Expanded(
                             child: ListView(
                               children: links.entries
-                                  .where((entry) =>
-                                      ![
+                                  .where((entry) => ![
                                         "WhatsApp Сервис",
                                         "Позвонить Сервис",
                                         "WhatsApp Магазин",
@@ -145,13 +234,15 @@ class _UserHomePageState extends State<UserHomePage> {
                                 }
 
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
                                   child: ElevatedButton.icon(
                                     onPressed: () => _launchURL(entry.value),
                                     icon: FaIcon(icon),
                                     label: Text(entry.key),
                                     style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 14),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
@@ -171,7 +262,8 @@ class _UserHomePageState extends State<UserHomePage> {
     );
   }
 
-  Widget buildButtonRow(BuildContext context, String whatsappKey, String phoneKey, Map<String, String> links) {
+  Widget buildButtonRow(BuildContext context, String whatsappKey,
+      String phoneKey, Map<String, String> links) {
     return Row(
       children: [
         Expanded(
@@ -181,7 +273,8 @@ class _UserHomePageState extends State<UserHomePage> {
             label: Text(whatsappKey.split(" ").last),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ),
@@ -193,7 +286,8 @@ class _UserHomePageState extends State<UserHomePage> {
             label: Text(phoneKey.split(" ").last),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ),

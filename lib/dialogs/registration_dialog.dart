@@ -66,12 +66,12 @@ class _RegistrationDialogState extends State<RegistrationDialog> {
       // ВАЖНО: сразу после регистрации разлогиниваем пользователя!
       await authService.logout();
       if (!mounted) return;
-      // Регистрация успешна — можно показать диалог с инструкцией по подтверждению почты
+      // Новое сообщение — подходит для phone auth!
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
           title: const Text('Регистрация успешна'),
-          content: const Text('Проверьте почту для подтверждения аккаунта.'),
+          content: const Text('Вам отправлено письмо для подтвержения регистрации'),
           actions: [
             TextButton(
               onPressed: () {
@@ -146,14 +146,18 @@ class _RegistrationDialogState extends State<RegistrationDialog> {
                 keyboardType: TextInputType.phone,
                 decoration: const InputDecoration(
                   labelText: 'Телефон *',
+                  hintText: '+996...',
                   border: OutlineInputBorder(),
                 ),
                 validator: (val) {
                   if (val == null || val.isEmpty) {
                     return 'Введите телефон';
                   }
-                  if (!RegExp(r'^[\d\+\-\s\(\)]{7,}$').hasMatch(val)) {
-                    return 'Введите корректный телефон';
+                  if (!val.startsWith('+')) {
+                    return 'Телефон должен начинаться с "+"';
+                  }
+                  if (!RegExp(r'^\+\d{11,15}$').hasMatch(val)) {
+                    return 'Введите телефон в формате +996XXXXXXXXX';
                   }
                   return null;
                 },
