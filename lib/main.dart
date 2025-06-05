@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
-import 'screens/auth_gate.dart';
+import 'screens/splash_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // ← обязательно
-  await Firebase.initializeApp();            // ← обязательно
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
 
   runApp(const BavariaApp());
 }
@@ -23,7 +23,7 @@ class BavariaApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Bavaria.kg',
         debugShowCheckedModeBanner: false,
-        home: const AuthGate(),
+        home: const SplashScreen(), // теперь сначала Splash, потом AuthGate
       ),
     );
   }

@@ -1,141 +1,118 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../widgets/bur_drawer.dart';
 import '../dialogs/login_dialog.dart';
-import '../widgets/pulsating_logo.dart';
 
 class GuestHomePage extends StatelessWidget {
-  final String name = "Bavaria.kg";
-  final String description = "Автосервис BMW";
-
-  final Map<String, String> links = {
-    "WhatsApp Сервис": "https://wa.me/996555103333",
-    "WhatsApp Магазин": "https://wa.me/996555343960",
-    "WhatsApp Авторазбор": "https://wa.me/996554343960",
-    "Instagram": "https://instagram.com/bavaria.kg",
-    "Позвонить Сервис": "tel:+996555103333",
-    "Позвонить Магазин": "tel:+996555343960",
-    "Позвонить Авторазбор": "tel:+996554343960",
-    "Мы в 2GIS": "https://go.2gis.com/12L50",
-    "Запчасти в наличии": "https://bavaria-bishkek.ru/"
-  };
-
-  GuestHomePage({super.key});
-
-  Future<void> _launchURL(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw 'Не удалось открыть $url';
-    }
-  }
+  const GuestHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      backgroundColor: const Color.fromARGB(199, 232, 238, 235),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 10, right: 16),
-                child: ElevatedButton(
-                  onPressed: () => showLoginDialog(context),
-                  child: const Text('Вход'),
-                ),
-              ),
+      drawer: SizedBox(
+        width: width * 0.75,
+        child: BurDrawer(onLogin: () {
+          showDialog(
+            context: context,
+            builder: (context) => const LoginDialog(),
+          );
+        }),
+      ),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(
+              Icons.menu,
+              color: const Color.fromARGB(255, 255, 215, 0),
+              size: 32,
             ),
-            const SizedBox(height: 40),
-            const PulsatingLogo(),
-            const SizedBox(height: 2),
-            Text(name, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(description, style: const TextStyle(fontSize: 16, color: Colors.black)),
-            const SizedBox(height: 30),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  children: _buildButtonRows(),
-                ),
-              ),
-            ),
-          ],
+            onPressed: () => Scaffold.of(context).openDrawer(),
+            splashRadius: 26,
+          ),
         ),
+      ),
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          // Фон
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/carbon_back.png'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.white.withOpacity(0.1),
+                  BlendMode.lighten,
+                ),
+              ),
+            ),
+          ),
+          // Контент
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [                
+                const SizedBox(height: 18),
+                Text(
+                  "В разработке!",
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent.shade700,
+                    letterSpacing: 1,
+                  ),
+                ),            
+               
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  List<Widget> _buildButtonRows() {
-    List<List<String>> groups = [
-      ["WhatsApp Сервис", "Позвонить Сервис"],
-      ["WhatsApp Магазин", "Позвонить Магазин"],
-      ["WhatsApp Авторазбор", "Позвонить Авторазбор"]
-    ];
+class _BmwButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
 
-    return [
-      for (var group in groups)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Row(
-            children: group.map((key) {
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: ElevatedButton.icon(
-                    onPressed: () => _launchURL(links[key]!),
-                    icon: key.contains("WhatsApp")
-                        ? const FaIcon(FontAwesomeIcons.whatsapp)
-                        : const Icon(Icons.phone),
-                    label: Text(key.split(' ').last),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+  const _BmwButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 260,
+      height: 52,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.white,
+          backgroundColor: color,
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.6,
           ),
         ),
-      const SizedBox(height: 20),
-      Expanded(
-        child: ListView(
-          children: links.entries
-              .where((entry) => !entry.key.contains("WhatsApp") && !entry.key.contains("Позвонить"))
-              .map((entry) {
-            IconData icon;
-            switch (entry.key) {
-              case 'Instagram':
-                icon = FontAwesomeIcons.instagram;
-                break;
-              case 'Мы в 2GIS':
-                icon = Icons.location_on;
-                break;
-              default:
-                icon = Icons.link;
-            }
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: ElevatedButton.icon(
-                onPressed: () => _launchURL(entry.value),
-                icon: FaIcon(icon),
-                label: Text(entry.key),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      )
-    ];
+        icon: Icon(icon, size: 24),
+        label: Text(label),
+        onPressed: onTap,
+      ),
+    );
   }
 }

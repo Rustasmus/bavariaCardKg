@@ -31,6 +31,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/logo.png
+    - assets/images/logoF.png
+    - assets/images/carbon_fiber.png
+    - assets/images/carbon_back.png
+    - assets/images/carbon_bra.png
 
 flutter_icons:
   android: true
