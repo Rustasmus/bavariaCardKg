@@ -5,7 +5,7 @@ class BurDrawer extends StatelessWidget {
   final VoidCallback? onHome;
   final VoidCallback? onContacts;
   final VoidCallback? onNews;
-  final VoidCallback? onOffers;
+  final VoidCallback? onPromos;
   final VoidCallback? onReviews;
   final VoidCallback? onAbout;
   final VoidCallback? onPackages;
@@ -16,7 +16,7 @@ class BurDrawer extends StatelessWidget {
     this.onPackages,
     this.onContacts,
     this.onNews,
-    this.onOffers,
+    this.onPromos,
     this.onReviews,
     this.onAbout,
     super.key,
@@ -114,7 +114,7 @@ class BurDrawer extends StatelessWidget {
               icon: Icons.local_offer,
               text: 'Акции',
               color:  const Color.fromARGB(255, 255, 215, 0),
-              onTap: onOffers ?? () => Navigator.pop(context),
+              onTap: onPromos ?? () => Navigator.pop(context),
             ),
             _DrawerItem(
               icon: Icons.reviews,

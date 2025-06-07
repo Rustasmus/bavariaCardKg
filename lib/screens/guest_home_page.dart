@@ -6,6 +6,8 @@ import '../dialogs/login_dialog.dart';
 import '../dialogs/contact_dialog.dart';
 import '../widgets/animated_logo_f.dart';
 import '../dialogs/work_packages_page.dart';
+import '../dialogs/news.dart';
+import '../dialogs/promos.dart';
 
 class GuestHomePage extends StatelessWidget {
   const GuestHomePage({super.key});
@@ -25,9 +27,10 @@ class GuestHomePage extends StatelessWidget {
               );
             },
             onContacts: () => showContactsDialog(context),
-            onPackages: () {
-              showWorkPackageDialog(context);
-            }),
+            onPackages: () => showWorkPackageDialog(context),
+            onNews: () => showNewsDialog(context),
+            onPromos: () => showPromosDialog(context),
+            ),
       ),
       appBar: AppBar(
         elevation: 0,

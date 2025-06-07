@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class WorkPackageDialog extends StatelessWidget {
-  const WorkPackageDialog({super.key});
+class NewsDialog extends StatelessWidget {
+  const NewsDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,7 @@ class WorkPackageDialog extends StatelessWidget {
               children: [
                 const SizedBox(height: 10),
                 Text(
-                  "Пакеты услуг и запчастей",
+                  "Новости и события",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
@@ -44,13 +44,12 @@ class WorkPackageDialog extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Подтягиваем пакеты из Firestore
                 FutureBuilder<QuerySnapshot>(
                   future: FirebaseFirestore.instance
                       .collection('workmans')
-                      .doc('packages4d7M6mM1CiB6iLIHcPKU')
-                      .collection('packages')
+                      .doc('newsyvttPHBhpwZZlEWNxuHD')
+                      .collection('news')
+                      .orderBy('date', descending: true)
                       .get(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -61,31 +60,37 @@ class WorkPackageDialog extends StatelessWidget {
                     }
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                       return const Text(
-                        "Пакеты пока не добавлены",
+                        "Новостей пока нет",
                         style: TextStyle(color: Colors.white70, fontSize: 17),
                       );
                     }
-                    final packages = snapshot.data!.docs;
+                    final news = snapshot.data!.docs;
                     return Column(
-                      children: List.generate(packages.length, (i) {
-                        final data = packages[i].data() as Map<String, dynamic>;
+                      children: List.generate(news.length, (i) {
+                        final data = news[i].data() as Map<String, dynamic>;
                         final title = (data['title'] ?? '').toString();
                         final description = (data['description'] ?? '').toString();
-                        final price = ("${data['price'] ?? ''} сом");
+                        final dateValue = data['date'];
+                        String dateStr = '';
+                        if (dateValue is Timestamp) {
+                          final dt = dateValue.toDate();
+                          dateStr = "${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}";
+                        } else if (dateValue is String) {
+                          dateStr = dateValue;
+                        }
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 14.0),
-                          child: _buildPackageCard(
+                          child: _buildNewsCard(
                             context: context,
                             title: title,
                             description: description,
-                            price: price,
+                            date: dateStr,
                           ),
                         );
                       }),
                     );
                   },
                 ),
-
                 const SizedBox(height: 20),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -102,101 +107,101 @@ class WorkPackageDialog extends StatelessWidget {
     );
   }
 
-  static Widget _buildPackageCard({
+  static Widget _buildNewsCard({
     required BuildContext context,
     required String title,
     required String description,
-    required String price,
+    required String date,
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = screenWidth * 0.9 > 380 ? 380.0 : screenWidth * 0.9;
 
     return Center(
-    child: SizedBox(
-      width: cardWidth,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 12,
-              offset: Offset(0, 4),
-            ),
-          ],
-          image: const DecorationImage(
-            image: AssetImage('assets/images/carbon_back.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
+      child: SizedBox(
+        width: cardWidth,
         child: Container(
-          // Полупрозрачный слой
           decoration: BoxDecoration(
-            color: const Color.fromARGB(255, 58, 200, 239).withOpacity(0.30), // Меняй прозрачность здесь (0.0 - 1.0)
             borderRadius: BorderRadius.circular(20),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 5,
-                          color: Colors.white,
-                          offset: Offset(0, 0),
-                          ),
-                        ]   
-                      )),
-                      
-              const SizedBox(height: 7),
-              Text(
-                description, 
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Color.fromARGB(255, 225, 225, 220),
-                  shadows: [
-                    Shadow(
-                      blurRadius: 1,
-                      color: Colors.black,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                  )),
-              const SizedBox(height: 12),
-              Text(
-                price,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: const Color.fromARGB(255, 255, 215, 0),
-                  shadows: [
-                    Shadow(
-                      blurRadius: 1,
-                      color: Colors.black,
-                      offset: Offset(0, 2),
-                    ),
-                                     
-                  ],
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 12,
+                offset: Offset(0, 4),
               ),
             ],
+            image: const DecorationImage(
+              image: AssetImage('assets/images/carbon_back.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 58, 200, 239).withOpacity(0.30),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 5,
+                        color: Colors.white,
+                        offset: Offset(0, 0),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Color.fromARGB(255, 225, 225, 220),
+                    shadows: [
+                      Shadow(
+                        blurRadius: 1,
+                        color: Colors.black,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  date,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color.fromARGB(255, 255, 215, 0),
+                    shadows: [
+                      Shadow(
+                        blurRadius: 1,
+                        color: Colors.black,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 }
 
-void showWorkPackageDialog(BuildContext context) {
+void showNewsDialog(BuildContext context) {
   showDialog(
     context: context,
     barrierDismissible: true,
-    builder: (_) => const WorkPackageDialog(),
+    builder: (_) => const NewsDialog(),
   );
 }

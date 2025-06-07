@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import 'registration_dialog.dart';
-import '../screens/workmans_home_page.dart';
-import '../screens/user_home_page.dart';
-import '../utils/workman_utils.dart'; // импортируем функцию проверки
+// import '../screens/workmans_home_page.dart';
+// import '../screens/user_home_page.dart';
+// import '../utils/workman_utils.dart'; // импортируем функцию проверки
 
 void showLoginDialog(BuildContext context) {
   showDialog(
