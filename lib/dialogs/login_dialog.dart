@@ -46,26 +46,13 @@ class _LoginDialogState extends State<LoginDialog> {
     if (!mounted) return;
 
     if (result == null) {
-      final user = authService.currentUser;
-
-      if (user != null && user.email != null) {
-        final isWorkman = await isWorkmanByEmail(user.email!);
-        if (!mounted) return;
-        if (isWorkman) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const WorkmansHomePage()),
-          );
-        } else {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const UserHomePage()),
-          );
-        }
-      }
+       Navigator.of(context).pop(); // Просто закрываем диалог, больше ничего!
+      // AuthGate автоматически отобразит нужную страницу!
     } else {
       setState(() {
         error = result;
       });
-    }
+    }      
   }
 
   @override

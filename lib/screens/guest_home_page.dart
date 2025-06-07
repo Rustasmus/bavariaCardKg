@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
+// import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+// import 'package:url_launcher/url_launcher.dart';
 import '../widgets/bur_drawer.dart';
 import '../dialogs/login_dialog.dart';
+import '../dialogs/contact_dialog.dart';
+import '../widgets/animated_logo_f.dart';
+import '../dialogs/work_packages_page.dart';
 
 class GuestHomePage extends StatelessWidget {
   const GuestHomePage({super.key});
@@ -14,12 +17,17 @@ class GuestHomePage extends StatelessWidget {
     return Scaffold(
       drawer: SizedBox(
         width: width * 0.75,
-        child: BurDrawer(onLogin: () {
-          showDialog(
-            context: context,
-            builder: (context) => const LoginDialog(),
-          );
-        }),
+        child: BurDrawer(
+            onLogin: () {
+              showDialog(
+                context: context,
+                builder: (context) => const LoginDialog(),
+              );
+            },
+            onContacts: () => showContactsDialog(context),
+            onPackages: () {
+              showWorkPackageDialog(context);
+            }),
       ),
       appBar: AppBar(
         elevation: 0,
@@ -34,6 +42,10 @@ class GuestHomePage extends StatelessWidget {
             onPressed: () => Scaffold.of(context).openDrawer(),
             splashRadius: 26,
           ),
+        ),
+        title: const LogoShine(
+          size: 300,
+          assetPath: 'assets/images/logoF.png',
         ),
       ),
       extendBodyBehindAppBar: true,
@@ -56,7 +68,7 @@ class GuestHomePage extends StatelessWidget {
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [                
+              children: [
                 const SizedBox(height: 18),
                 Text(
                   "В разработке!",
@@ -66,8 +78,7 @@ class GuestHomePage extends StatelessWidget {
                     color: Colors.blueAccent.shade700,
                     letterSpacing: 1,
                   ),
-                ),            
-               
+                ),
               ],
             ),
           ),

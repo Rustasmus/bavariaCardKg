@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'auth_gate.dart'; // Импортируй свой AuthGate
 
 class SplashScreen extends StatefulWidget {
@@ -13,10 +14,13 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _bgScaleController;
   late final Animation<double> _bgScaleAnimation;
+  final AudioPlayer _player = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
+
+    _playIntro();
 
     _bgScaleController = AnimationController(
       vsync: this,
@@ -43,9 +47,14 @@ class _SplashScreenState extends State<SplashScreen>
     });
   }
 
+  Future<void> _playIntro() async {
+    await _player.play(AssetSource('sounds/intro.mp3'));
+  }
+
   @override
   void dispose() {
     _bgScaleController.dispose();
+    _player.dispose();
     super.dispose();
   }
 

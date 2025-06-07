@@ -8,10 +8,12 @@ class BurDrawer extends StatelessWidget {
   final VoidCallback? onOffers;
   final VoidCallback? onReviews;
   final VoidCallback? onAbout;
+  final VoidCallback? onPackages;
 
   const BurDrawer({
     this.onLogin,
     this.onHome,
+    this.onPackages,
     this.onContacts,
     this.onNews,
     this.onOffers,
@@ -95,6 +97,12 @@ class BurDrawer extends StatelessWidget {
               text: 'Контакты',
               color:  const Color.fromARGB(255, 255, 215, 0),
               onTap: onContacts ?? () => Navigator.pop(context),
+            ),
+            _DrawerItem(
+              icon: Icons.folder,
+              text: 'Пакеты',
+              color:   const Color.fromARGB(255, 255, 215, 0),
+              onTap: onPackages ?? () => Navigator.pop(context),
             ),
             _DrawerItem(
               icon: Icons.article,
