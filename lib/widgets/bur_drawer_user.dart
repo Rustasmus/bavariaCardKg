@@ -185,12 +185,7 @@ class _BurDrawerUserState extends State<BurDrawerUser> {
                     Padding(
                       padding: const EdgeInsets.only(right: 18, top: 18),
                       child: GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pop(); // Сначала закрыть Drawer!
-                          Future.delayed(const Duration(milliseconds: 180), () {
-                            _showQRDialog(context, user.uid);
-                          });
-                        },
+                        onTap: () => _showQRDialog(context, user.uid),
                         child: Container(
                           padding: const EdgeInsets.all(5),
                           decoration: BoxDecoration(
