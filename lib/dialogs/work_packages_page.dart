@@ -132,7 +132,7 @@ class WorkPackageDialog extends StatelessWidget {
         child: Container(
           // Полупрозрачный слой
           decoration: BoxDecoration(
-            color: const Color.fromARGB(255, 58, 200, 239).withOpacity(0.30), // Меняй прозрачность здесь (0.0 - 1.0)
+            color: Colors.blueGrey.withOpacity(0.30), // Меняй прозрачность здесь (0.0 - 1.0)
             borderRadius: BorderRadius.circular(20),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -143,11 +143,11 @@ class WorkPackageDialog extends StatelessWidget {
                   style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Color.fromARGB(255, 255, 215, 0),
                       shadows: [
                         Shadow(
                           blurRadius: 5,
-                          color: Colors.white,
+                          color: Colors.black54,
                           offset: Offset(0, 0),
                           ),
                         ]   
@@ -173,7 +173,7 @@ class WorkPackageDialog extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: const Color.fromARGB(255, 255, 215, 0),
+                  color: Colors.blueAccent,
                   shadows: [
                     Shadow(
                       blurRadius: 1,

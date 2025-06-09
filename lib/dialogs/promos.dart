@@ -128,7 +128,7 @@ class PromosDialog extends StatelessWidget {
           ),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 58, 200, 239).withOpacity(0.30),
+              color: Colors.blueGrey.withOpacity(0.20),
               borderRadius: BorderRadius.circular(20),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -140,11 +140,11 @@ class PromosDialog extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Color.fromARGB(255, 255, 215, 0),
                     shadows: [
                       Shadow(
                         blurRadius: 5,
-                        color: Colors.white,
+                        color: Colors.black54,
                         offset: Offset(0, 0),
                       ),
                     ],
@@ -171,7 +171,7 @@ class PromosDialog extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Color.fromARGB(255, 255, 215, 0),
+                    color: Colors.blueAccent,
                     shadows: [
                       Shadow(
                         blurRadius: 1,

@@ -4,6 +4,7 @@ import '../services/auth_service.dart'; // Если используешь AuthS
 import '../dialogs/packages_dialog.dart';
 import '../dialogs/news_dialog.dart';
 import '../dialogs/promo_dialog.dart';
+import '../utils/smm_banner_manager.dart';
 
 class SmmHomePage extends StatelessWidget {
   const SmmHomePage({super.key});
@@ -48,6 +49,17 @@ class SmmHomePage extends StatelessWidget {
                     context: context,
                     builder: (_) => const NewsDialog(),
                   );
+                },
+              ),
+              const SizedBox(height: 18),
+              _SmmButton(
+                icon: Icons.slideshow_outlined,
+                label: 'Управление баннерами',
+                color: Colors.deepPurple,
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const SmmBannerManager(),
+                  ));
                 },
               ),
               const SizedBox(height: 18),
