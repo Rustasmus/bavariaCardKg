@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
-import '../widgets/bur_drawer_user.dart'; // !!! наш новый Drawer
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/auth/auth_bloc.dart';
+import '../bloc/auth/auth_state.dart';
+import '../widgets/bur_drawer_user.dart';
 import '../dialogs/contact_dialog.dart';
 import '../dialogs/work_packages_page.dart';
 import '../dialogs/news.dart';
 import '../dialogs/promos.dart';
 import '../widgets/hero_banner.dart';
 import '../widgets/horizontal_firestore_carousel.dart';
-import '../widgets/records_history_dialog.dart'; // Диалог истории
+import '../widgets/records_history_dialog.dart';
 
 class UserHomePage extends StatelessWidget {
   const UserHomePage({super.key});
@@ -17,111 +18,115 @@ class UserHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final user = authService.currentUser;
+    // Достаём пользователя через Bloc
+    String? userUid;
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is AuthUser ||
+            state is AuthWorkman ||
+            state is AuthSmm) {
+          // Можно хранить любые пользовательские поля (email, имя и др.)
+          final user = (state as dynamic).user;
+          userUid = user.uid;
+        }
 
-    void showHistoryDialog() {
-      if (user == null) return;
-      showDialog(
-        context: context,
-        builder: (_) => RecordsHistoryDialog(
-          userUid: user.uid,
-          title: "История начислений",
-          headerColor: Colors.deepPurple,
-          evenRowColor: Colors.grey[200],
-          oddRowColor: Colors.white,
-        ),
-      );
-    }
-
-    return Scaffold(
-      drawer: SizedBox(
-        width: width * 0.75,
-        child: BurDrawerUser(
-          onContacts: () => showContactsDialog(context),
-          onPackages: () => showWorkPackageDialog(context),
-          onNews: () => showNewsDialog(context),
-          onPromos: () => showPromosDialog(context),
-          onHistory: showHistoryDialog,
-          onLogout: () async {
-            // тут твоя логика выхода:
-            await Provider.of<AuthService>(context, listen: false).logout();
-            // навигация на гест/логин и очистка стека:
-            Navigator.of(context).pushNamedAndRemoveUntil('/guest', (r) => false);
-          },
-        ),
-      ),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: Icon(
-              Icons.menu,
-              color: const Color.fromARGB(255, 255, 215, 0),
-              size: 32,
+        void showHistoryDialog() {
+          if (userUid == null) return;
+          showDialog(
+            context: context,
+            builder: (_) => RecordsHistoryDialog(
+              userUid: userUid!,
+              title: "История начислений",
+              headerColor: Colors.deepPurple,
+              evenRowColor: Colors.grey[200],
+              oddRowColor: Colors.white,
             ),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-            splashRadius: 26,
-          ),
-        ),
-        // Нет логотипа!
-        title: null,
-      ),
-      extendBodyBehindAppBar: true,
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/carbon_back.png'),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.white.withOpacity(0.12),
-              BlendMode.lighten,
+          );
+        }
+
+        return Scaffold(
+          drawer: SizedBox(
+            width: width * 0.75,
+            child: BurDrawerUser(
+              onContacts: () => showContactsDialog(context),
+              onPackages: () => showWorkPackageDialog(context),
+              onNews: () => showNewsDialog(context),
+              onPromos: () => showPromosDialog(context),
+              onHistory: showHistoryDialog,
             ),
           ),
-        ),
-        child: ListView(
-          padding: const EdgeInsets.only(top: kToolbarHeight + 28, bottom: 24),
-          children: [
-            const HeroBanner(),
-            const SizedBox(height: 18),
-            _SectionHeader(
-              title: "Новости",
-              onShowAll: () => showNewsDialog(context),
+          appBar: AppBar(
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            leading: Builder(
+              builder: (context) => IconButton(
+                icon: Icon(
+                  Icons.menu,
+                  color: const Color.fromARGB(255, 255, 215, 0),
+                  size: 32,
+                ),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+                splashRadius: 26,
+              ),
             ),
-            const HorizontalFirestoreCarousel(
-              collectionPath: 'workmans/newsyvttPHBhpwZZlEWNxuHD/news',
-              titleField: 'title',
-              descField: 'description',
-              metaField: 'date',
-              isDate: true,
-              emptyMessage: 'Нет новостей',
+            title: null,
+          ),
+          extendBodyBehindAppBar: true,
+          body: Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/carbon_back.png'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.white.withOpacity(0.12),
+                  BlendMode.lighten,
+                ),
+              ),
             ),
-            _SectionHeader(
-              title: "Акции",
-              onShowAll: () => showPromosDialog(context),
+            child: ListView(
+              padding: const EdgeInsets.only(top: kToolbarHeight + 28, bottom: 24),
+              children: [
+                const HeroBanner(),
+                const SizedBox(height: 18),
+                _SectionHeader(
+                  title: "Новости",
+                  onShowAll: () => showNewsDialog(context),
+                ),
+                const HorizontalFirestoreCarousel(
+                  collectionPath: 'workmans/newsyvttPHBhpwZZlEWNxuHD/news',
+                  titleField: 'title',
+                  descField: 'description',
+                  metaField: 'date',
+                  isDate: true,
+                  emptyMessage: 'Нет новостей',
+                ),
+                _SectionHeader(
+                  title: "Акции",
+                  onShowAll: () => showPromosDialog(context),
+                ),
+                const HorizontalFirestoreCarousel(
+                  collectionPath: 'workmans/promo8JNwDA8Es30xRo3mQSrA/promos',
+                  titleField: 'title',
+                  descField: 'description',
+                  metaField: 'price',
+                  emptyMessage: 'Нет акций',
+                ),
+                _SectionHeader(
+                  title: "Пакеты",
+                  onShowAll: () => showWorkPackageDialog(context),
+                ),
+                const HorizontalFirestoreCarousel(
+                  collectionPath: 'workmans/packages4d7M6mM1CiB6iLIHcPKU/packages',
+                  titleField: 'title',
+                  descField: 'description',
+                  metaField: 'price',
+                  emptyMessage: 'Нет пакетов',
+                ),
+              ],
             ),
-            const HorizontalFirestoreCarousel(
-              collectionPath: 'workmans/promo8JNwDA8Es30xRo3mQSrA/promos',
-              titleField: 'title',
-              descField: 'description',
-              metaField: 'price',
-              emptyMessage: 'Нет акций',
-            ),
-            _SectionHeader(
-              title: "Пакеты",
-              onShowAll: () => showWorkPackageDialog(context),
-            ),
-            const HorizontalFirestoreCarousel(
-              collectionPath: 'workmans/packages4d7M6mM1CiB6iLIHcPKU/packages',
-              titleField: 'title',
-              descField: 'description',
-              metaField: 'price',
-              emptyMessage: 'Нет пакетов',
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

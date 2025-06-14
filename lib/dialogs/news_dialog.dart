@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class NewsDialog extends StatelessWidget {
-  const NewsDialog({Key? key}) : super(key: key);
+  const NewsDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +111,7 @@ class AddEditNewsDialog extends StatefulWidget {
   final String? newsId;
   final Map<String, dynamic>? initialData;
 
-  const AddEditNewsDialog({Key? key, this.newsId, this.initialData}) : super(key: key);
+  const AddEditNewsDialog({super.key, this.newsId, this.initialData});
 
   @override
   State<AddEditNewsDialog> createState() => _AddEditNewsDialogState();

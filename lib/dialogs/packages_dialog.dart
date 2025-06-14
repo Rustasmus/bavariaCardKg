@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'add_edit_package_dialog.dart'; // (создадим ниже)
 
 class PackagesDialog extends StatelessWidget {
-  const PackagesDialog({Key? key}) : super(key: key);
+  const PackagesDialog({super.key});
 
   @override
   Widget build(BuildContext context) {

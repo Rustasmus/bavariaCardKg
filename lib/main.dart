@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:provider/provider.dart';
-import 'services/auth_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_core/firebase_core.dart'; // добавь это
+import 'bloc/auth/auth_bloc.dart';
+import 'bloc/auth/auth_event.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-
+  WidgetsFlutterBinding.ensureInitialized(); // добавь эту строку
+  await Firebase.initializeApp(); // инициализация Firebase
   runApp(const BavariaApp());
 }
 
@@ -16,14 +16,12 @@ class BavariaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthService()),
-      ],
+    return BlocProvider<AuthBloc>(
+      create: (_) => AuthBloc()..add(AuthStarted()),
       child: MaterialApp(
         title: 'Bavaria.kg',
         debugShowCheckedModeBanner: false,
-        home: const SplashScreen(), // теперь сначала Splash, потом AuthGate
+        home: const SplashScreen(),
       ),
     );
   }

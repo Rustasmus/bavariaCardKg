@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../utils/record_utils.dart';
-import 'workmans_home_page.dart';
-import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../bloc/auth/auth_bloc.dart';
+import '../bloc/auth/auth_event.dart';
 import '../widgets/records_history_dialog.dart';
 import '../dialogs/add_record_dialog.dart';
+import '../utils/record_utils.dart';
 import '../utils/workman_utils.dart';
+import 'workmans_home_page.dart';
 
-// --- Главный экран деталей пользователя ---
 class WorkmanUserDetailsPage extends StatefulWidget {
   final Map<String, dynamic> userData;
   final String userUid;
@@ -40,12 +41,15 @@ class _WorkmanUserDetailsPageState extends State<WorkmanUserDetailsPage> {
       loadingBonus = true;
       lastBonus = 0.0;
     });
+
     final recordsRef = FirebaseFirestore.instance
         .collection('users')
         .doc(widget.userUid)
         .collection('records');
     final lastRecordSnapshot =
         await recordsRef.orderBy('date', descending: true).limit(1).get();
+
+    if (!mounted) return; // <-- mounted только тут, после await!
     setState(() {
       loadingBonus = false;
       if (lastRecordSnapshot.docs.isNotEmpty) {
@@ -58,17 +62,18 @@ class _WorkmanUserDetailsPageState extends State<WorkmanUserDetailsPage> {
   }
 
   void _showAddRecordDialog() async {
+    // showDialog НЕ асинхронная операция по сути, context ОК
     await showDialog(
       context: context,
-      builder: (context) => AddRecordDialog(
+      builder: (dialogContext) => AddRecordDialog(
         lastBonusAvailable: lastBonus ?? 0.0,
         onSave: ({
           required int order,
           required double amount,
           required double bonusOut,
         }) async {
-          final authService = Provider.of<AuthService>(context, listen: false);
-          final workmanEmail = authService.currentUser?.email ?? 'unknown';
+          // Все async после нажатия "Сохранить"
+          final workmanEmail = await getCurrentWorkmanEmail();
           final workmanID = await getWorkmanKeyByEmail(workmanEmail);
           final error = await addClientRecord(
             userUid: widget.userUid,
@@ -77,6 +82,8 @@ class _WorkmanUserDetailsPageState extends State<WorkmanUserDetailsPage> {
             bonusOut: bonusOut,
             workmanID: workmanID,
           );
+          // ВНИМАНИЕ: используем context из State, но только после проверки mounted!
+          if (!mounted) return;
           if (error == null) {
             await _loadLastBonus();
             if (!mounted) return;
@@ -121,7 +128,11 @@ class _WorkmanUserDetailsPageState extends State<WorkmanUserDetailsPage> {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: "Выйти",
-            onPressed: widget.onSignOut,
+            onPressed: () {
+              // Выход через Bloc
+              context.read<AuthBloc>().add(AuthLogoutRequested());
+              // После выхода AuthGate сам покажет нужный экран
+            },
           ),
         ],
       ),
@@ -185,15 +196,15 @@ class _WorkmanUserDetailsPageState extends State<WorkmanUserDetailsPage> {
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () {
+                      // showDialog — контекст из State, не после await, всё ОК
                       showDialog(
                         context: context,
                         builder: (context) => RecordsHistoryDialog(
                           userUid: widget.userUid,
-                          title: "История начислений", // любой заголовок
-                          headerColor:
-                              Colors.deepPurple, // цвет строки-заголовка
-                          evenRowColor: Colors.grey[200], // цвет чётных строк
-                          oddRowColor: Colors.white, // цвет нечётных строк
+                          title: "История начислений",
+                          headerColor: Colors.deepPurple,
+                          evenRowColor: Colors.grey[200],
+                          oddRowColor: Colors.white,
                         ),
                       );
                     },
@@ -211,4 +222,10 @@ class _WorkmanUserDetailsPageState extends State<WorkmanUserDetailsPage> {
       ),
     );
   }
+}
+
+/// Хелпер для получения email текущего workman-а
+Future<String> getCurrentWorkmanEmail() async {
+  final auth = FirebaseAuth.instance;
+  return auth.currentUser?.email ?? 'unknown';
 }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/auth_service.dart';
+import '../bloc/auth/auth_bloc.dart';
+import '../bloc/auth/auth_event.dart';
+import '../bloc/auth/auth_state.dart';
 
 class BurDrawerUser extends StatefulWidget {
   final VoidCallback? onContacts;
@@ -11,7 +12,6 @@ class BurDrawerUser extends StatefulWidget {
   final VoidCallback? onNews;
   final VoidCallback? onPromos;
   final VoidCallback? onHistory;
-  final VoidCallback? onLogout;
 
   const BurDrawerUser({
     this.onContacts,
@@ -19,7 +19,6 @@ class BurDrawerUser extends StatefulWidget {
     this.onNews,
     this.onPromos,
     this.onHistory,
-    this.onLogout,
     super.key,
   });
 
@@ -39,19 +38,26 @@ class _BurDrawerUserState extends State<BurDrawerUser> {
   }
 
   Future<void> _loadProfile() async {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final user = authService.currentUser;
-    if (user != null) {
-      final data = await authService.fetchUserProfile(user.uid);
+    // Получаем пользователя через AuthBloc
+    final authState = context.read<AuthBloc>().state;
+    String? uid;
+    if (authState is AuthUser) {
+      uid = authState.user.uid;
+    } else if (authState is AuthWorkman || authState is AuthSmm) {
+      uid = (authState as dynamic).user.uid;
+    }
+    if (uid != null) {
+      // Получаем профиль пользователя
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final recordsRef = FirebaseFirestore.instance
           .collection('users')
-          .doc(user.uid)
+          .doc(uid)
           .collection('records');
       final lastRecordSnapshot =
           await recordsRef.orderBy('date', descending: true).limit(1).get();
 
       setState(() {
-        userProfile = data;
+        userProfile = userDoc.data();
         isLoading = false;
         if (lastRecordSnapshot.docs.isNotEmpty) {
           final docData = lastRecordSnapshot.docs.first.data();
@@ -65,30 +71,41 @@ class _BurDrawerUserState extends State<BurDrawerUser> {
   }
 
   void _showQRDialog(BuildContext context, String uid) {
-  showDialog(
-    context: context,
-    builder: (_) => AlertDialog(
-      backgroundColor: Colors.white,
-      title: const Text("Ваш QR-код"),
-      content: Center(
-        child: SizedBox(
-          width: 220,
-          height: 220,
-          child: QrImageView(
-            data: uid,
-            backgroundColor: Colors.white,
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text("Ваш QR-код"),
+        content: Center(
+          child: SizedBox(
+            width: 220,
+            height: 220,
+            child: QrImageView(
+              data: uid,
+              backgroundColor: Colors.white,
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context);
-    final user = authService.currentUser;
+    // Получаем пользователя через Bloc
+    String? uid;
+    String fio = "";
+    final authState = context.watch<AuthBloc>().state;
+    if (authState is AuthUser) {
+      uid = authState.user.uid;
+    } else if (authState is AuthWorkman || authState is AuthSmm) {
+      uid = (authState as dynamic).user.uid;
+    }
+
+    fio = [
+      userProfile?['firstName'] ?? '',
+      userProfile?['middleName'] ?? ''
+    ].where((e) => e.toString().isNotEmpty).join(' ');
 
     return Stack(
       children: [
@@ -137,7 +154,7 @@ class _BurDrawerUserState extends State<BurDrawerUser> {
                                   width: 60, height: 18, child: LinearProgressIndicator(),
                                 )
                               : Text(
-                                  '${userProfile?['firstName'] ?? ''} ${userProfile?['middleName'] ?? ''}',
+                                  fio,
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 20,
@@ -160,7 +177,7 @@ class _BurDrawerUserState extends State<BurDrawerUser> {
                               Text(
                                 isLoading
                                     ? '...'
-                                    : '${bonusAvailable?.toStringAsFixed(2) ?? "0.00"}',
+                                    : bonusAvailable?.toStringAsFixed(2) ?? "0.00",
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 17,
@@ -181,11 +198,11 @@ class _BurDrawerUserState extends State<BurDrawerUser> {
                       ),
                     ),
                   ),
-                  if (user != null)
+                  if (uid != null)
                     Padding(
                       padding: const EdgeInsets.only(right: 18, top: 18),
                       child: GestureDetector(
-                        onTap: () => _showQRDialog(context, user.uid),
+                        onTap: () => _showQRDialog(context, uid!),
                         child: Container(
                           padding: const EdgeInsets.all(5),
                           decoration: BoxDecoration(
@@ -258,7 +275,10 @@ class _BurDrawerUserState extends State<BurDrawerUser> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                onPressed: widget.onLogout,
+                onPressed: () {
+                  context.read<AuthBloc>().add(AuthLogoutRequested());
+                  Navigator.of(context).pop();
+                },
               ),
             ),
             Padding(

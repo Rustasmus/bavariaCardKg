@@ -5,8 +5,7 @@ class AddEditPackageDialog extends StatefulWidget {
   final String? packageId;
   final Map<String, dynamic>? initialData;
 
-  const AddEditPackageDialog({Key? key, this.packageId, this.initialData})
-      : super(key: key);
+  const AddEditPackageDialog({super.key, this.packageId, this.initialData});
 
   @override
   State<AddEditPackageDialog> createState() => _AddEditPackageDialogState();

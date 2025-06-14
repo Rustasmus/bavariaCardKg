@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../services/auth_service.dart'; // Если используешь AuthService
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/auth/auth_bloc.dart';
+import '../bloc/auth/auth_event.dart';
+
 import '../dialogs/packages_dialog.dart';
 import '../dialogs/news_dialog.dart';
 import '../dialogs/promo_dialog.dart';
@@ -70,8 +72,7 @@ class SmmHomePage extends StatelessWidget {
                 onTap: () async {
                   await showDialog(
                     context: context,
-                    builder: (_) =>
-                        const PromoDialog(),
+                    builder: (_) => const PromoDialog(),
                   );
                 },
               ),
@@ -83,8 +84,7 @@ class SmmHomePage extends StatelessWidget {
                 onTap: () async {
                   await showDialog(
                     context: context,
-                    builder: (_) =>
-                        const PackagesDialog(), // <-- твой виджет диалога
+                    builder: (_) => const PackagesDialog(),
                   );
                 },
               ),
@@ -97,13 +97,12 @@ class SmmHomePage extends StatelessWidget {
                   // TODO: реализуй отправку push
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Push уведомление отправлено!')),
+                      content: Text('Push уведомление отправлено!'),
+                    ),
                   );
                 },
               ),
               const SizedBox(height: 32),
-
-              // Кнопка "Выйти"
               ElevatedButton.icon(
                 icon: const Icon(Icons.exit_to_app),
                 label: const Text("Выйти"),
@@ -112,18 +111,16 @@ class SmmHomePage extends StatelessWidget {
                   foregroundColor: Colors.white,
                   minimumSize: const Size(180, 48),
                   textStyle: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w600),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
                 ),
                 onPressed: () async {
-                  // Если используешь Provider + AuthService:
-                  await Provider.of<AuthService>(context, listen: false)
-                      .logout();
-                  // Если нет - можно так:
-                  // await FirebaseAuth.instance.signOut();
-                  // AuthGate обработает выход
+                  // ВЫХОД через Bloc (без AuthService/Provider)
+                  context.read<AuthBloc>().add(AuthLogoutRequested());
                 },
               ),
             ],
@@ -134,7 +131,7 @@ class SmmHomePage extends StatelessWidget {
   }
 }
 
-// Красивая фирменная кнопка SMM (универсально для страницы)
+// Универсальная кнопка для SMM-панели
 class _SmmButton extends StatelessWidget {
   final IconData icon;
   final String label;

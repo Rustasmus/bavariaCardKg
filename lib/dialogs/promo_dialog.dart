@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PromoDialog extends StatelessWidget {
-  const PromoDialog({Key? key}) : super(key: key);
+  const PromoDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +93,7 @@ class AddEditPromoDialog extends StatefulWidget {
   final String? promoId;
   final Map<String, dynamic>? initialData;
 
-  const AddEditPromoDialog({Key? key, this.promoId, this.initialData}) : super(key: key);
+  const AddEditPromoDialog({super.key, this.promoId, this.initialData});
 
   @override
   State<AddEditPromoDialog> createState() => _AddEditPromoDialogState();
