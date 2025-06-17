@@ -3,15 +3,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/stroke_text.dart';
 import 'dart:ui';
 
-class NewsDialog extends StatefulWidget {
+class PackagesDialog extends StatefulWidget {
   final int initialIndex;
-  const NewsDialog({super.key, required this.initialIndex});
+  const PackagesDialog({super.key, required this.initialIndex});
 
   @override
-  State<NewsDialog> createState() => _NewsDialogState();
+  State<PackagesDialog> createState() => _PackagesDialogState();
 }
 
-class _NewsDialogState extends State<NewsDialog> {
+class _PackagesDialogState extends State<PackagesDialog> {
   final _scrollController = ScrollController();
 
   @override
@@ -21,10 +21,9 @@ class _NewsDialogState extends State<NewsDialog> {
   }
 
   void _scrollToIndex(int index) {
-    // Позже вызовем, когда будет известна высота карточки
+    // Для вертикального списка (у тебя примерно 150-170 на карточку)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Примерно: высота карточки + отступ
-      double cardHeight = 165; // Задай по своей верстке
+      double cardHeight = 145; // Измени если карточки выше/ниже
       _scrollController.animateTo(
         index * cardHeight,
         duration: const Duration(milliseconds: 400),
@@ -40,7 +39,7 @@ class _NewsDialogState extends State<NewsDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 44),
       child: Stack(
         children: [
-          // Фон и блюр
+          // Основной фон
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -50,6 +49,7 @@ class _NewsDialogState extends State<NewsDialog> {
               borderRadius: BorderRadius.all(Radius.circular(32)),
             ),
           ),
+          // Эффект "стекла"
           ClipRRect(
             borderRadius: BorderRadius.circular(32),
             child: BackdropFilter(
@@ -87,7 +87,7 @@ class _NewsDialogState extends State<NewsDialog> {
               children: [
                 const SizedBox(height: 18),
                 StrokeText(
-                  text: "Новости и события",
+                  text: "Пакеты услуг и запчастей",
                   fontSize: 23,
                   fontWeight: FontWeight.bold,
                   textColor: Colors.white,
@@ -99,9 +99,8 @@ class _NewsDialogState extends State<NewsDialog> {
                   child: FutureBuilder<QuerySnapshot>(
                     future: FirebaseFirestore.instance
                         .collection('workmans')
-                        .doc('newsyvttPHBhpwZZlEWNxuHD')
-                        .collection('news')
-                        .orderBy('date', descending: true)
+                        .doc('packages4d7M6mM1CiB6iLIHcPKU')
+                        .collection('packages')
                         .get(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -112,38 +111,32 @@ class _NewsDialogState extends State<NewsDialog> {
                       }
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                         return const Text(
-                          "Новостей пока нет",
+                          "Пакеты пока не добавлены",
                           style: TextStyle(color: Colors.white70, fontSize: 17),
                         );
                       }
-                      final news = snapshot.data!.docs;
-                      // Автоскролл к нужной карточке, когда появятся данные
+                      final packages = snapshot.data!.docs;
+
+                      // Скроллим к нужной карточке (один раз)
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         _scrollToIndex(widget.initialIndex);
                       });
 
                       return ListView.builder(
                         controller: _scrollController,
-                        itemCount: news.length,
+                        itemCount: packages.length,
                         itemBuilder: (context, i) {
-                          final data = news[i].data() as Map<String, dynamic>;
+                          final data = packages[i].data() as Map<String, dynamic>;
                           final title = (data['title'] ?? '').toString();
                           final description = (data['description'] ?? '').toString();
-                          final dateValue = data['date'];
-                          String dateStr = '';
-                          if (dateValue is Timestamp) {
-                            final dt = dateValue.toDate();
-                            dateStr = "${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}";
-                          } else if (dateValue is String) {
-                            dateStr = dateValue;
-                          }
+                          final price = ("${data['price'] ?? ''} сом");
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: _buildNewsCard(
+                            padding: const EdgeInsets.only(bottom: 14.0),
+                            child: _buildPackageCard(
                               context: context,
                               title: title,
                               description: description,
-                              date: dateStr,
+                              price: price,
                             ),
                           );
                         },
@@ -176,11 +169,11 @@ class _NewsDialogState extends State<NewsDialog> {
     );
   }
 
-  static Widget _buildNewsCard({
+  static Widget _buildPackageCard({
     required BuildContext context,
     required String title,
     required String description,
-    required String date,
+    required String price,
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = screenWidth * 0.9 > 420 ? 420.0 : screenWidth * 0.9;
@@ -192,11 +185,11 @@ class _NewsDialogState extends State<NewsDialog> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: const Color.fromARGB(255, 22, 88, 142), // Окантовка карточки
+            color: const Color.fromARGB(255, 22, 88, 142),
             width: 2.1,
           ),
           image: const DecorationImage(
-            image: AssetImage('assets/images/main_fon.png'), // Фон для карточки
+            image: AssetImage('assets/images/main_fon.png'),
             fit: BoxFit.cover,
           ),
           boxShadow: [
@@ -210,7 +203,6 @@ class _NewsDialogState extends State<NewsDialog> {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
           children: [
             StrokeText(
               text: title,
@@ -238,11 +230,11 @@ class _NewsDialogState extends State<NewsDialog> {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(Icons.calendar_today, color: Colors.blueAccent, size: 17),
+                const Icon(Icons.attach_money, color: Colors.blueAccent, size: 17),
                 const SizedBox(width: 6),
                 StrokeText(
-                  text: date,
-                  fontSize: 15.5,
+                  text: price,
+                  fontSize: 16,
                   textColor: Colors.blueAccent,
                   strokeColor: Colors.black,
                   strokeWidth: 1.1,
@@ -257,10 +249,10 @@ class _NewsDialogState extends State<NewsDialog> {
   }
 }
 
-void showNewsDialog(BuildContext context, {required int initialIndex}) {
+void showPackagesDialog(BuildContext context, {required int initialIndex}) {
   showDialog(
     context: context,
     barrierDismissible: true,
-    builder: (_) => NewsDialog(initialIndex: initialIndex),
+    builder: (_) => PackagesDialog(initialIndex: initialIndex),
   );
 }

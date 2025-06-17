@@ -60,21 +60,56 @@ class PromoDialog extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(data['description'] ?? ''),
-                            Text('${data['price']} сом', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            Text('${data['price']} сом',
+                                style: const TextStyle(fontWeight: FontWeight.bold)),
                           ],
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit),
-                          tooltip: "Редактировать",
-                          onPressed: () async {
-                            await showDialog(
-                              context: context,
-                              builder: (_) => AddEditPromoDialog(
-                                promoId: doc.id,
-                                initialData: data,
-                              ),
-                            );
-                          },
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              tooltip: "Редактировать",
+                              onPressed: () async {
+                                await showDialog(
+                                  context: context,
+                                  builder: (_) => AddEditPromoDialog(
+                                    promoId: doc.id,
+                                    initialData: data,
+                                  ),
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              tooltip: "Удалить акцию",
+                              onPressed: () async {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text("Удалить акцию?"),
+                                    content: const Text("Вы уверены, что хотите удалить эту акцию?"),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(ctx).pop(false),
+                                        child: const Text("Отмена"),
+                                      ),
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                        ),
+                                        onPressed: () => Navigator.of(ctx).pop(true),
+                                        child: const Text("Удалить"),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed == true) {
+                                  await doc.reference.delete();
+                                }
+                              },
+                            ),
+                          ],
                         ),
                       );
                     },

@@ -2,14 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth/auth_bloc.dart';
 import '../bloc/auth/auth_state.dart';
+
+import '../bloc/ui/user/user_ui_bloc.dart';
+import '../bloc/ui/user/user_ui_event.dart';
+import '../bloc/ui/user/user_ui_state.dart';
+
 import '../widgets/bur_drawer_user.dart';
 import '../dialogs/contact_dialog.dart';
-import '../dialogs/work_packages_page.dart';
+import '../dialogs/packages.dart';
 import '../dialogs/news.dart';
 import '../dialogs/promos.dart';
 import '../widgets/hero_banner.dart';
 import '../widgets/horizontal_firestore_carousel.dart';
 import '../widgets/records_history_dialog.dart';
+import '../widgets/animated_logo_f.dart';
 
 class UserHomePage extends StatelessWidget {
   const UserHomePage({super.key});
@@ -18,111 +24,133 @@ class UserHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
-    // Достаём пользователя через Bloc
+    // Получаем userUid из AuthBloc
     String? userUid;
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         if (state is AuthUser ||
             state is AuthWorkman ||
             state is AuthSmm) {
-          // Можно хранить любые пользовательские поля (email, имя и др.)
           final user = (state as dynamic).user;
           userUid = user.uid;
         }
 
-        void showHistoryDialog() {
-          if (userUid == null) return;
-          showDialog(
-            context: context,
-            builder: (_) => RecordsHistoryDialog(
-              userUid: userUid!,
-              title: "История начислений",
-              headerColor: Colors.deepPurple,
-              evenRowColor: Colors.grey[200],
-              oddRowColor: Colors.white,
-            ),
-          );
-        }
-
-        return Scaffold(
-          drawer: SizedBox(
-            width: width * 0.75,
-            child: BurDrawerUser(
-              onContacts: () => showContactsDialog(context),
-              onPackages: () => showWorkPackageDialog(context),
-              onNews: () => showNewsDialog(context),
-              onPromos: () => showPromosDialog(context),
-              onHistory: showHistoryDialog,
-            ),
-          ),
-          appBar: AppBar(
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            leading: Builder(
-              builder: (context) => IconButton(
-                icon: Icon(
-                  Icons.menu,
-                  color: const Color.fromARGB(255, 255, 215, 0),
-                  size: 32,
-                ),
-                onPressed: () => Scaffold.of(context).openDrawer(),
-                splashRadius: 26,
+        return BlocProvider(
+          create: (_) => UserUiBloc(),
+          child: BlocListener<UserUiBloc, UserUiState>(
+            listener: (context, state) {
+              if (state is UserUiShowDialog) {
+                final event = state.dialogEvent;
+                if (event is ShowContactsDialog) {
+                  showContactsDialog(context);
+                } else if (event is ShowPackagesDialog) {
+                  showPackagesDialog(context, initialIndex: 0);
+                } else if (event is ShowNewsDialog) {
+                  showNewsDialog(context, initialIndex: 0);
+                } else if (event is ShowPromosDialog) {
+                  showPromosDialog(context, initialIndex: 0);
+                } else if (event is ShowHistoryDialog) {
+                  if (userUid == null) return;
+                  showDialog(
+                    context: context,
+                    builder: (_) => RecordsHistoryDialog(
+                      userUid: userUid!,
+                      title: "История начислений",
+                      headerColor: Colors.deepPurple,
+                      evenRowColor: Colors.grey[200],
+                      oddRowColor: Colors.white,
+                    ),
+                  );
+                }
+              }
+            },
+            child: Scaffold(
+              drawer: SizedBox(
+                width: width * 0.75,
+                child: const BurDrawerUser(),
               ),
-            ),
-            title: null,
-          ),
-          extendBodyBehindAppBar: true,
-          body: Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/carbon_back.png'),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.white.withOpacity(0.12),
-                  BlendMode.lighten,
+              appBar: AppBar(
+                elevation: 0,
+                backgroundColor: Colors.transparent,
+                leading: Builder(
+                  builder: (context) => IconButton(
+                    icon: Icon(
+                      Icons.menu,
+                      color: const Color.fromARGB(255, 22, 88, 142),
+                      size: 32,
+                    ),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                    splashRadius: 26,
+                  ),
+                ),
+                title: Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: LogoShine(
+                  size: 250, assetPath: 'assets/images/logoF.png'),
                 ),
               ),
-            ),
-            child: ListView(
-              padding: const EdgeInsets.only(top: kToolbarHeight + 28, bottom: 24),
-              children: [
-                const HeroBanner(),
-                const SizedBox(height: 18),
-                _SectionHeader(
-                  title: "Новости",
-                  onShowAll: () => showNewsDialog(context),
+              extendBodyBehindAppBar: true,
+              body: Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/main_fon_grad.png'),
+                    fit: BoxFit.cover,
+                  ),
                 ),
-                const HorizontalFirestoreCarousel(
-                  collectionPath: 'workmans/newsyvttPHBhpwZZlEWNxuHD/news',
-                  titleField: 'title',
-                  descField: 'description',
-                  metaField: 'date',
-                  isDate: true,
-                  emptyMessage: 'Нет новостей',
+                child: ListView(
+                  padding: const EdgeInsets.only(top: kToolbarHeight + 28, bottom: 24),
+                  children: [
+                    const HeroBanner(),
+                    const SizedBox(height: 18),
+                    _SectionHeader(
+                      icon: Icons.article,
+                      title: "Новости",
+                      onShowAll: () => context.read<UserUiBloc>().add(ShowNewsDialog()),
+                    ),
+                    HorizontalFirestoreCarousel(
+                      collectionPath: 'workmans/newsyvttPHBhpwZZlEWNxuHD/news',
+                      titleField: 'title',
+                      descField: 'description',
+                      metaField: 'date',
+                      isDate: true,
+                      emptyMessage: 'Нет новостей',
+                      onCardTap: (data, idx) {
+                        showNewsDialog(context, initialIndex: idx);
+                      },
+                    ),
+                    _SectionHeader(
+                      icon: Icons.local_offer,
+                      title: "Акции",
+                      onShowAll: () => context.read<UserUiBloc>().add(ShowPromosDialog()),
+                    ),
+                    HorizontalFirestoreCarousel(
+                      collectionPath: 'workmans/promo8JNwDA8Es30xRo3mQSrA/promos',
+                      titleField: 'title',
+                      descField: 'description',
+                      metaField: 'price',
+                      emptyMessage: 'Нет акций',
+                      onCardTap: (data, idx) {
+                        showPromosDialog(context, initialIndex: idx);
+                      },
+                    ),
+                    _SectionHeader(
+                      icon: Icons.folder,
+                      title: "Пакеты",
+                      onShowAll: () => context.read<UserUiBloc>().add(ShowPackagesDialog()),
+                    ),
+                    HorizontalFirestoreCarousel(
+                      collectionPath: 'workmans/packages4d7M6mM1CiB6iLIHcPKU/packages',
+                      titleField: 'title',
+                      descField: 'description',
+                      metaField: 'price',
+                      emptyMessage: 'Нет пакетов',
+                      onCardTap: (data, idx) {
+                        showPackagesDialog(context, initialIndex: idx);
+                      },
+                    ),
+                  ],
                 ),
-                _SectionHeader(
-                  title: "Акции",
-                  onShowAll: () => showPromosDialog(context),
-                ),
-                const HorizontalFirestoreCarousel(
-                  collectionPath: 'workmans/promo8JNwDA8Es30xRo3mQSrA/promos',
-                  titleField: 'title',
-                  descField: 'description',
-                  metaField: 'price',
-                  emptyMessage: 'Нет акций',
-                ),
-                _SectionHeader(
-                  title: "Пакеты",
-                  onShowAll: () => showWorkPackageDialog(context),
-                ),
-                const HorizontalFirestoreCarousel(
-                  collectionPath: 'workmans/packages4d7M6mM1CiB6iLIHcPKU/packages',
-                  titleField: 'title',
-                  descField: 'description',
-                  metaField: 'price',
-                  emptyMessage: 'Нет пакетов',
-                ),
-              ],
+              ),
             ),
           ),
         );
@@ -132,9 +160,10 @@ class UserHomePage extends StatelessWidget {
 }
 
 class _SectionHeader extends StatelessWidget {
+  final IconData icon;
   final String title;
   final VoidCallback onShowAll;
-  const _SectionHeader({required this.title, required this.onShowAll});
+  const _SectionHeader({required this.icon, required this.title, required this.onShowAll});
 
   @override
   Widget build(BuildContext context) {
@@ -142,6 +171,18 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Row(
         children: [
+          Icon(
+            icon,
+            size: 28,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                offset: Offset(0, 1.8),
+                blurRadius: 2,
+                color: Colors.black45,
+              ),
+            ],
+          ),
           Text(
             title,
             style: const TextStyle(
@@ -157,18 +198,6 @@ class _SectionHeader extends StatelessWidget {
               ],
             ),
           ),
-          const Spacer(),
-          TextButton(
-            onPressed: onShowAll,
-            child: const Text(
-              'Показать все',
-              style: TextStyle(
-                color: Color.fromARGB(255, 255, 215, 0),
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
-            ),
-          )
         ],
       ),
     );

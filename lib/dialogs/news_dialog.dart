@@ -81,18 +81,52 @@ class NewsDialog extends StatelessWidget {
                               ),
                           ],
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit),
-                          tooltip: "Редактировать",
-                          onPressed: () async {
-                            await showDialog(
-                              context: context,
-                              builder: (_) => AddEditNewsDialog(
-                                newsId: doc.id,
-                                initialData: data,
-                              ),
-                            );
-                          },
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              tooltip: "Редактировать",
+                              onPressed: () async {
+                                await showDialog(
+                                  context: context,
+                                  builder: (_) => AddEditNewsDialog(
+                                    newsId: doc.id,
+                                    initialData: data,
+                                  ),
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              tooltip: "Удалить новость",
+                              onPressed: () async {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text("Удалить новость?"),
+                                    content: const Text("Вы уверены, что хотите удалить эту новость?"),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(ctx).pop(false),
+                                        child: const Text("Отмена"),
+                                      ),
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                        ),
+                                        onPressed: () => Navigator.of(ctx).pop(true),
+                                        child: const Text("Удалить"),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed == true) {
+                                  await doc.reference.delete();
+                                }
+                              },
+                            ),
+                          ],
                         ),
                       );
                     },

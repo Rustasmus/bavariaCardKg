@@ -53,14 +53,14 @@ class _LoginDialogState extends State<LoginDialog> {
             Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('assets/images/carbon_bra.png'),
+                  image: AssetImage('assets/images/main_fon.png'),
                   fit: BoxFit.cover,
                 ),
                 borderRadius: BorderRadius.circular(32),
               ),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.blueGrey.withOpacity(0.4),
+                  color: Colors.blueGrey.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(32),
                 ),
                 child: Padding(

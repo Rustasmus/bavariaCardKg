@@ -84,7 +84,7 @@ class SmmHomePage extends StatelessWidget {
                 onTap: () async {
                   await showDialog(
                     context: context,
-                    builder: (_) => const PackagesDialog(),
+                    builder: (_) => const PackagesAdminDialog(),
                   );
                 },
               ),

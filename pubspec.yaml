@@ -2,7 +2,7 @@ name: bavaria_kg
 description: Bavaria.kg Автосервис BMW
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -43,8 +43,19 @@ flutter:
     - assets/images/carbon_back.png
     - assets/images/carbon_bra.png
     - assets/sounds/intro.mp3
+    - assets/images/main_fon_grad.png
+    - assets/images/t_bg_bg.png
+    - assets/images/main_fon.png
+    - assets/images/card_back_gb.png
 
 flutter_icons:
   android: true
   ios: true
   image_path: "assets/images/logo.png"
+
+fonts:
+  - family: OpenSans
+    fonts:
+      - asset: assets/fonts/OpenSans-Regular.ttf
+      - asset: assets/fonts/OpenSans-Bold.ttf
+        weight: 700

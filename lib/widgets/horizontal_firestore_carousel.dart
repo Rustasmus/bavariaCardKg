@@ -5,9 +5,10 @@ class HorizontalFirestoreCarousel extends StatelessWidget {
   final String collectionPath;
   final String titleField;
   final String descField;
-  final String metaField; // price, date или др.
+  final String metaField;
   final bool isDate;
   final String emptyMessage;
+  final void Function(Map<String, dynamic> data, int index)? onCardTap;
 
   const HorizontalFirestoreCarousel({
     super.key,
@@ -17,6 +18,7 @@ class HorizontalFirestoreCarousel extends StatelessWidget {
     required this.metaField,
     this.isDate = false,
     this.emptyMessage = "Нет данных",
+    this.onCardTap,
   });
 
   @override
@@ -24,9 +26,9 @@ class HorizontalFirestoreCarousel extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     double carouselHeight, cardWidth, cardHeight;
     if (screenWidth <= 400) {
-      carouselHeight = 88;
-      cardWidth = 160;
-      cardHeight = 88;
+      carouselHeight = 120;
+      cardWidth = 170;
+      cardHeight = 120;
     } else if (screenWidth <= 500) {
       carouselHeight = 105;
       cardWidth = 200;
@@ -40,21 +42,29 @@ class HorizontalFirestoreCarousel extends StatelessWidget {
     return SizedBox(
       height: carouselHeight,
       child: FutureBuilder<QuerySnapshot>(
-        future: FirebaseFirestore.instance.collection(collectionPath)
+        future: FirebaseFirestore.instance
+            .collection(collectionPath)
             .orderBy(isDate ? metaField : 'title', descending: isDate)
-            .limit(8).get(),
+            .limit(8)
+            .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: Padding(
-              padding: EdgeInsets.all(18.0),
-              child: CircularProgressIndicator(),
-            ));
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(18.0),
+                child: CircularProgressIndicator(),
+              ),
+            );
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return Center(
               child: Text(
                 emptyMessage,
-                style: const TextStyle(color: Colors.white70, fontSize: 17),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 17,
+                  fontFamily: 'OpenSans',
+                ),
               ),
             );
           }
@@ -72,11 +82,12 @@ class HorizontalFirestoreCarousel extends StatelessWidget {
               String metaString = '';
               if (isDate && meta is Timestamp) {
                 final dt = meta.toDate();
-                metaString = "${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}";
+                metaString =
+                    "${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}";
               } else {
                 metaString = (meta ?? '').toString();
               }
-              return _AnimatedFadeIn(
+              Widget card = _AnimatedFadeIn(
                 child: _CarouselCard(
                   title: title,
                   description: description,
@@ -88,6 +99,14 @@ class HorizontalFirestoreCarousel extends StatelessWidget {
                   height: cardHeight,
                 ),
               );
+              // Оборачиваем в GestureDetector если onCardTap задан
+              if (onCardTap != null) {
+                card = GestureDetector(
+                  onTap: () => onCardTap!(data, i),
+                  child: card,
+                );
+              }
+              return card;
             },
           );
         },
@@ -129,63 +148,68 @@ class _CarouselCard extends StatelessWidget {
           ),
         ],
         image: const DecorationImage(
-          image: AssetImage('assets/images/carbon_back.png'),
+          image: AssetImage('assets/images/main_fon.png'),
           fit: BoxFit.cover,
+        ),
+        border: Border.all(
+          color: Color.fromARGB(255, 22, 88, 142),
+          width: 2.0,
         ),
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
+          color: Colors.white.withOpacity(0.10),
           borderRadius: BorderRadius.circular(22),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 255, 215, 0),
-                  shadows: [
-                    Shadow(
-                      blurRadius: 4,
-                      color: Colors.black,
-                      offset: Offset(0, 0),
-                    ),
-                  ],
-                )),
-            const SizedBox(height: 3),
-            Text(description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color.fromARGB(255, 225, 225, 220),
-                  shadows: [
-                    Shadow(
-                      blurRadius: 1,
-                      color: Colors.black,
-                      offset: Offset(0, 1),
-                    ),
-                  ],
-                )),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'OpenSans',
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              description,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'OpenSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    blurRadius: 1,
+                    color: Colors.black,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
+            ),
             const Spacer(),
             Row(
               children: [
                 Text(
                   meta,
                   style: const TextStyle(
+                    fontFamily: 'OpenSans',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Colors.blueAccent,
+                    color: Colors.white,
                     shadows: [
                       Shadow(
-                        blurRadius: 1,
+                        blurRadius: 3,
                         color: Colors.black,
-                        offset: Offset(0, 2),
+                        offset: Offset(0.5, 1),
                       ),
                     ],
                   ),

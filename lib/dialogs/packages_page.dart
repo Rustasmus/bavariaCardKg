@@ -3,35 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/stroke_text.dart';
 import 'dart:ui';
 
-class NewsDialog extends StatefulWidget {
+class PackagesDialog extends StatelessWidget {
   final int initialIndex;
-  const NewsDialog({super.key, required this.initialIndex});
-
-  @override
-  State<NewsDialog> createState() => _NewsDialogState();
-}
-
-class _NewsDialogState extends State<NewsDialog> {
-  final _scrollController = ScrollController();
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _scrollToIndex(int index) {
-    // Позже вызовем, когда будет известна высота карточки
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Примерно: высота карточки + отступ
-      double cardHeight = 165; // Задай по своей верстке
-      _scrollController.animateTo(
-        index * cardHeight,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
-    });
-  }
+  const PackagesDialog({super.key, required this.initialIndex});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +14,7 @@ class _NewsDialogState extends State<NewsDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 44),
       child: Stack(
         children: [
-          // Фон и блюр
+          // Основной фон
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -50,6 +24,7 @@ class _NewsDialogState extends State<NewsDialog> {
               borderRadius: BorderRadius.all(Radius.circular(32)),
             ),
           ),
+          // Эффект "стекла"
           ClipRRect(
             borderRadius: BorderRadius.circular(32),
             child: BackdropFilter(
@@ -82,26 +57,25 @@ class _NewsDialogState extends State<NewsDialog> {
               ],
             ),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 18),
-                StrokeText(
-                  text: "Новости и события",
-                  fontSize: 23,
-                  fontWeight: FontWeight.bold,
-                  textColor: Colors.white,
-                  strokeColor: Colors.black,
-                  strokeWidth: 2,
-                ),
-                const SizedBox(height: 24),
-                Expanded(
-                  child: FutureBuilder<QuerySnapshot>(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 18),
+                  StrokeText(
+                    text: "Пакеты услуг и запчастей",
+                    fontSize: 23,
+                    fontWeight: FontWeight.bold,
+                    textColor: Colors.white,
+                    strokeColor: Colors.black,
+                    strokeWidth: 2,
+                  ),
+                  const SizedBox(height: 24),
+                  FutureBuilder<QuerySnapshot>(
                     future: FirebaseFirestore.instance
                         .collection('workmans')
-                        .doc('newsyvttPHBhpwZZlEWNxuHD')
-                        .collection('news')
-                        .orderBy('date', descending: true)
+                        .doc('packages4d7M6mM1CiB6iLIHcPKU')
+                        .collection('packages')
                         .get(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -112,63 +86,49 @@ class _NewsDialogState extends State<NewsDialog> {
                       }
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                         return const Text(
-                          "Новостей пока нет",
+                          "Пакеты пока не добавлены",
                           style: TextStyle(color: Colors.white70, fontSize: 17),
                         );
                       }
-                      final news = snapshot.data!.docs;
-                      // Автоскролл к нужной карточке, когда появятся данные
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        _scrollToIndex(widget.initialIndex);
-                      });
-
-                      return ListView.builder(
-                        controller: _scrollController,
-                        itemCount: news.length,
-                        itemBuilder: (context, i) {
-                          final data = news[i].data() as Map<String, dynamic>;
+                      final packages = snapshot.data!.docs;
+                      return Column(
+                        children: List.generate(packages.length, (i) {
+                          final data = packages[i].data() as Map<String, dynamic>;
                           final title = (data['title'] ?? '').toString();
                           final description = (data['description'] ?? '').toString();
-                          final dateValue = data['date'];
-                          String dateStr = '';
-                          if (dateValue is Timestamp) {
-                            final dt = dateValue.toDate();
-                            dateStr = "${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}";
-                          } else if (dateValue is String) {
-                            dateStr = dateValue;
-                          }
+                          final price = ("${data['price'] ?? ''} сом");
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: _buildNewsCard(
+                            padding: const EdgeInsets.only(bottom: 14.0),
+                            child: _buildPackageCard(
                               context: context,
                               title: title,
                               description: description,
-                              date: dateStr,
+                              price: price,
                             ),
                           );
-                        },
+                        }),
                       );
                     },
                   ),
-                ),
-                const SizedBox(height: 24),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.blueGrey.withOpacity(0.22),
-                    padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
+                  const SizedBox(height: 24),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.blueGrey.withOpacity(0.22),
+                      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    child: const Text(
+                      'Закрыть',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ),
-                  child: const Text(
-                    'Закрыть',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                ),
-                const SizedBox(height: 6),
-              ],
+                  const SizedBox(height: 6),
+                ],
+              ),
             ),
           ),
         ],
@@ -176,11 +136,11 @@ class _NewsDialogState extends State<NewsDialog> {
     );
   }
 
-  static Widget _buildNewsCard({
+  static Widget _buildPackageCard({
     required BuildContext context,
     required String title,
     required String description,
-    required String date,
+    required String price,
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = screenWidth * 0.9 > 420 ? 420.0 : screenWidth * 0.9;
@@ -196,7 +156,7 @@ class _NewsDialogState extends State<NewsDialog> {
             width: 2.1,
           ),
           image: const DecorationImage(
-            image: AssetImage('assets/images/main_fon.png'), // Фон для карточки
+            image: AssetImage('assets/images/main_fon.png'), // Фон карточки
             fit: BoxFit.cover,
           ),
           boxShadow: [
@@ -210,7 +170,6 @@ class _NewsDialogState extends State<NewsDialog> {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
           children: [
             StrokeText(
               text: title,
@@ -238,11 +197,11 @@ class _NewsDialogState extends State<NewsDialog> {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(Icons.calendar_today, color: Colors.blueAccent, size: 17),
+                const Icon(Icons.attach_money, color: Colors.blueAccent, size: 17),
                 const SizedBox(width: 6),
                 StrokeText(
-                  text: date,
-                  fontSize: 15.5,
+                  text: price,
+                  fontSize: 16,
                   textColor: Colors.blueAccent,
                   strokeColor: Colors.black,
                   strokeWidth: 1.1,
@@ -257,10 +216,10 @@ class _NewsDialogState extends State<NewsDialog> {
   }
 }
 
-void showNewsDialog(BuildContext context, {required int initialIndex}) {
+void showPackagesDialog(BuildContext context, {required int initialIndex}) {
   showDialog(
     context: context,
     barrierDismissible: true,
-    builder: (_) => NewsDialog(initialIndex: initialIndex),
+    builder: (_) => PackagesDialog(initialIndex: initialIndex),
   );
 }

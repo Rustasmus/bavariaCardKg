@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/admin_bonus_summary';
+import '../utils/admin_bonus_summary.dart';
 
 class AdminHomePage extends StatelessWidget {
   const AdminHomePage({super.key});
